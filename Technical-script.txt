@@ -1,0 +1,142 @@
+Technical Explanation of the Sentiment Analysis Script
+This document provides a detailed, step-by-step technical breakdown of the sentiment_analysis.py script. It explains the purpose of each code block, the libraries used, and the underlying machine learning concepts.
+
+Section 1: Setup and Dependencies
+The script begins by importing all the necessary libraries.
+
+pandas: A powerful data manipulation and analysis library. It's used to load and manage the dataset in a tabular format called a DataFrame.
+
+numpy: A fundamental package for numerical computation in Python. While not used for many direct calculations here, it's a core dependency for pandas and scikit-learn.
+
+re: The regular expressions library, used for sophisticated text pattern matching and replacement during the text cleaning phase.
+
+joblib: A part of the SciPy ecosystem used for saving and loading Python objects, which is perfect for persisting our trained machine learning model and vectorizer to disk.
+
+matplotlib.pyplot & seaborn: Data visualization libraries. matplotlib is the foundational plotting library, while seaborn is built on top of it to create more statistically attractive plots, such as the confusion matrix and count plots.
+
+nltk (Natural Language Toolkit): A comprehensive library for natural language processing (NLP). It's used here for accessing language resources like stopwords and for lemmatization.
+
+sklearn (scikit-learn): The primary machine learning library in this script.
+
+TfidfVectorizer: To convert raw text into a numerical format (TF-IDF matrix).
+
+train_test_split: A utility to easily split data into training and testing sets.
+
+LogisticRegression: The classification algorithm used to build the model.
+
+classification_report, confusion_matrix, accuracy_score: Functions to evaluate the performance of the model.
+
+kagglehub: The official Kaggle library used to programmatically download datasets directly from Kaggle's platform.
+
+os: Provides a way of using operating system-dependent functionality, like creating file paths with os.path.join().
+
+Section 2: NLTK Data Download
+Before processing text, the script ensures that two essential NLTK data packages are available:
+
+stopwords: These are common words in a language (e.g., "the", "a", "in", "is") that carry little semantic meaning. Removing them helps the model focus on the words that are more indicative of sentiment.
+
+wordnet: A large lexical database of English. It's required by the WordNetLemmatizer to reduce words to their base or dictionary form, a process called lemmatization. For example, "running," "ran," and "runs" all become "run." This helps consolidate the vocabulary and reduces the number of unique words the model has to learn.
+
+The download_nltk_data function checks if these packages exist and downloads them only if they are missing.
+
+Section 3: Data Acquisition and Loading (Steps 1 & 2)
+This section handles fetching and loading the data.
+
+Downloading: kagglehub.dataset_download connects to Kaggle's API, downloads the "amazon-fine-food-reviews" dataset (which is a ZIP archive), and automatically extracts its contents to a local cache directory. It returns the path to this directory.
+
+Path Construction: os.path.join(dataset_dir, 'Reviews.csv') creates a correct, operating-system-agnostic file path to the Reviews.csv file inside the download directory.
+
+Loading: pd.read_csv() reads the CSV file into a pandas DataFrame.
+
+nrows=250000: This parameter is used for efficiency. Instead of loading the full dataset (which is over 500,000 rows), it only loads the first 250,000, which is sufficient for developing and testing the model.
+
+encoding='latin-1': This specifies the character encoding. Text datasets from the web can contain special characters that the default UTF-8 encoding can't handle. latin-1 is a more permissive encoding that avoids potential loading errors.
+
+Error Handling: The entire block is wrapped in a try...except statement. If anything goes wrong (e.g., Kaggle authentication fails, the file is not found), it prints a helpful error message and exits instead of crashing.
+
+Section 4: Data Preprocessing and Cleaning (Step 3)
+Raw text data is messy. This step is crucial for converting it into a clean, standardized format for the model.
+
+Sentiment Mapping: The map_sentiment function converts the numerical Score (1-5) into categorical labels: Positive (4-5), Negative (1-2), and Neutral (3). This transforms the problem into a classification task.
+
+Text Cleaning: The clean_text function performs several standard NLP cleaning operations in sequence:
+
+re.sub(r'<.*?>', '', text): Removes any HTML tags (e.g., <br>).
+
+re.sub(r'[^a-zA-Z\s]', '', text): Removes any character that is not a letter or a whitespace. This eliminates punctuation, numbers, and symbols.
+
+.lower(): Converts the entire text to lowercase to ensure words like "Good" and "good" are treated as the same word.
+
+.split(): Splits the string of text into a list of individual words (tokens).
+
+Lemmatization & Stopword Removal: The script iterates through the tokens, removing stopwords and applying lemmatization to each remaining word.
+
+' '.join(words): Reassembles the cleaned list of words back into a single string.
+
+Section 5: Feature Engineering (Step 4)
+Machine learning models cannot understand words; they only understand numbers. This step, known as feature engineering or vectorization, converts the cleaned text into a numerical representation.
+
+TF-IDF (Term Frequency-Inverse Document Frequency): This is a statistical measure that evaluates how relevant a word is to a document in a collection of documents.
+
+Term Frequency (TF): Calculates how often a word appears in a single review. A word that appears many times has a higher TF.
+
+Inverse Document Frequency (IDF): Measures how important the word is. It penalizes words that are very common across all reviews (like "food" or "taste" in this dataset) and boosts the score of words that are rare and thus more specific.
+
+TfidfVectorizer: This scikit-learn class handles the entire TF-IDF process.
+
+max_features=5000: This tells the vectorizer to only consider the top 5,000 most frequent words in the dataset. This helps control the dimensionality of the data and reduces noise from very rare words.
+
+.fit_transform(X): This method first learns the vocabulary from the text data (fit) and then converts the text into a TF-IDF matrix (transform). The resulting X_tfidf is a sparse matrix where each row corresponds to a review and each column corresponds to a word from the vocabulary.
+
+Section 6: Model Training (Step 5)
+This section builds and trains the sentiment classification model.
+
+Train-Test Split: train_test_split divides the data into a training set (used to teach the model) and a testing set (used to evaluate its performance on unseen data).
+
+test_size=0.2: Allocates 20% of the data for testing and 80% for training.
+
+random_state=42: Ensures that the split is the same every time the script is run, making the results reproducible.
+
+stratify=y: This is very important for imbalanced datasets. It ensures that the proportion of positive and negative reviews is the same in both the training and testing sets.
+
+Logistic Regression: This is the chosen classification algorithm. It's a robust and interpretable model that works well for text classification.
+
+class_weight='balanced': This is the key parameter that addresses the class imbalance problem (far more positive reviews than negative ones). It automatically adjusts the model's learning process to give more weight and importance to the under-represented "Negative" class, preventing the model from simply defaulting to the majority "Positive" class.
+
+max_iter=1000: Increases the number of iterations allowed for the model's solver to converge, which can be necessary for complex datasets.
+
+.fit(X_train, y_train): This is the core training step where the model learns the relationship between the TF-IDF features (X_train) and the sentiment labels (y_train).
+
+Section 7: Model Evaluation (Step 6)
+After training, it's essential to check how well the model performs on the unseen test data.
+
+accuracy_score: Calculates the overall percentage of correct predictions. While simple, it can be misleading on imbalanced datasets.
+
+classification_report: Provides a detailed report with key evaluation metrics:
+
+Precision: Of all the predictions the model made for a class, how many were correct. High precision for "Negative" means that when the model predicts a review is negative, it's usually right.
+
+Recall: Of all the actual instances of a class, how many did the model correctly identify. High recall for "Negative" means the model is good at finding most of the negative reviews.
+
+F1-Score: The harmonic mean of precision and recall, providing a single score that balances both. This is often the most useful metric for imbalanced problems.
+
+confusion_matrix: A table that visualizes the model's performance by showing the counts of:
+
+True Positives (TP): Correctly predicted positive.
+
+True Negatives (TN): Correctly predicted negative.
+
+False Positives (FP): Incorrectly predicted positive (Type I error).
+
+False Negatives (FN): Incorrectly predicted negative (Type II error).
+
+Section 8 & 9: Visualization, Persistence, and Prediction (Steps 7-10)
+The final steps make the project practical and reusable.
+
+Visualization (Step 7): matplotlib and seaborn are used to generate and save PNG images of the sentiment distribution and the confusion matrix, providing a clear visual summary of the data and model performance.
+
+Saving the Model (Step 8): joblib.dump serializes the trained model and the tfidf_vectorizer and saves them as .pkl files. This is crucial because it allows you to reuse them for future predictions without having to retrain the entire pipeline from scratch.
+
+Prediction Function (Step 9): The predict_sentiment function encapsulates the entire prediction pipeline. It takes raw text as input, loads the saved vectorizer and model, applies the same cleaning and vectorization steps used during training, and returns the predicted sentiment.
+
+Interactive Loop (Step 10): A while loop provides a simple command-line interface to test the model with custom reviews in real-time, demonstrating its practical application.
