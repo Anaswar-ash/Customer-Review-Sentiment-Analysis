@@ -58,7 +58,7 @@ Section 4: Data Preprocessing and Cleaning (Step 3)
 Raw text data is messy. This step is crucial for converting it into a clean, standardized format for the model.
 
 Sentiment Mapping: The map_sentiment function converts the numerical Score (1-5) into categorical labels: Positive (4-5), Negative (1-2), and Neutral (3). This transforms the problem into a classification task.
-
+ 
 Text Cleaning: The clean_text function performs several standard NLP cleaning operations in sequence:
 
 re.sub(r'<.*?>', '', text): Removes any HTML tags (e.g., <br>).
