@@ -1,5 +1,5 @@
 Technical Explanation of the Sentiment Analysis Script
-This document provides a detailed, step-by-step technical breakdown of the sentiment_analysis.py script. It explains the purpose of each code block, the libraries used, and the underlying machine learning concepts.
+This document provides a detailed, step-by-step technical breakdown of the sentiment_project.py script. It explains the purpose of each code block, the libraries used, and the underlying machine learning concepts.
 
 Section 1: Setup and Dependencies
 The script begins by importing all the necessary libraries.
